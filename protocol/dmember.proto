@@ -1,0 +1,61 @@
+package dmember;
+
+enum Type
+{
+    HEARTBEAT = 1;
+    PING_REQ = 2;
+    PING_ACK = 3;
+    JOIN_REQ = 4;
+    JOIN_ACK = 5;
+}
+
+message HeartBeat
+{
+    message Member
+    {
+        required string id = 1;
+        required int32 count = 2;
+        required int64 timestamp = 3;
+        required bool leaving = 4;
+    }
+
+    repeated Member memberlist = 1;
+    required bool updateConnection = 2;
+}
+
+
+// sent by introducer
+message PingRequest
+{
+}
+
+message JoinAck
+{
+    required int64 jointime = 1;
+}
+
+// sent by members
+message PingAck
+{
+    required string id = 1;
+    required int32 count = 2;
+    required int64 timestamp = 3;
+}
+
+message JoinRequest
+{
+    required string id = 1;
+}
+
+message WrappedMessage
+{
+    required Type type = 1;
+    oneof msg
+    {
+        HeartBeat heartBeat = 2;
+        PingRequest pingRequest = 3;
+        PingAck pingAck = 4;
+        JoinRequest joinRequest = 5;
+        JoinAck joinAck = 6;
+    }
+}

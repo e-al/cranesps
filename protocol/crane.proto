@@ -1,0 +1,339 @@
+package crane;
+
+
+enum CraneType {
+    CLIENT_REQ = 1;
+    CLIENT_REP = 2;
+    NIMBUS_REQ = 3;
+    NIMBUS_REP = 4;
+    SUPERVISOR_REQ = 5;
+    SUPERVISOR_REP = 6;
+    TUPLE = 7;
+    TUPLE_BATCH = 8;
+}
+
+message CraneClientRequest {
+    enum ClientRequestType {
+        SUBMIT = 1;
+        START = 2;
+        STOP = 3;
+        KILL = 4;
+        SEND = 5;
+        STATUS = 6;
+    }
+
+    message Parent {
+        required string name = 1;
+        required string grouping = 2;
+    }
+
+    message BoltSpec {
+        required string name = 1;
+        repeated Parent parents = 2;
+        required string runname = 3;
+
+        optional int32 paralevel = 4;
+    }
+
+    message SpoutSpec {
+        required string name = 1;
+        required string runname = 2;
+
+    }
+
+
+    message SubmitRequest {
+        required string toponame = 1;
+        repeated BoltSpec boltspecs = 2;
+        repeated SpoutSpec spoutspecs = 3;
+
+        optional bool ackerbolt = 4;
+    }
+
+    message StartRequest {
+        required string toponame = 1;
+    }
+
+    message StopRequest {
+        required string toponame = 1;
+    }
+
+    message KillRequest {
+        required string toponame = 1;
+    }
+
+    message SendRequest {
+        required string toponame = 1;
+        required string filename = 2;
+        required int32 port = 3;
+        required int32 filesize = 4;
+        required string filemd5 = 5;
+        required bytes data = 6;
+        repeated string extractedfiles = 7;
+    }
+
+    message StatusRequest {
+
+    }
+
+
+    required ClientRequestType type = 1;
+    oneof msg
+    {
+        SubmitRequest submitrequest = 2;
+        StartRequest startrequest = 3;
+        StopRequest stoprequest = 4;
+        KillRequest killrequest = 5;
+        SendRequest sendrequest = 6;
+        StatusRequest statusrequest = 7;
+    }
+
+}
+
+message CraneClientReply {
+    enum ClientReplyType {
+        SUBMIT = 1;
+        START = 2;
+        STOP = 3;
+        KILL = 4;
+        SEND = 5;
+        STATUS = 6;
+    }
+
+    message SubmitReply {
+        required string toponame = 1;
+        required bool approval = 2;
+    }
+
+    message StartReply {
+        required string toponame = 1;
+        required bool nonexist = 2;
+    }
+
+    message StopReply {
+        required string toponame = 1;
+        required bool nonexist = 2;
+    }
+
+    message KillReply {
+        required string toponame = 1;
+        required bool nonexist = 2;
+    }
+
+    message SendReply {
+        required string toponame = 1;
+        required bool md5match = 2;
+    }
+
+    message StatusReply {
+        message TopoStatus {
+            message Worker {
+                required string name = 1;
+                required string address = 2;
+                required string runname = 3;
+            }
+
+            required string toponame = 1;
+            required string status = 2;
+            repeated Worker workers = 3;
+        }
+        repeated TopoStatus topostatus = 1;
+    }
+
+    required ClientReplyType type = 1;
+    oneof msg {
+        SubmitReply submitreply = 2;
+        StartReply startreply = 3;
+        StopReply stopreply = 4;
+        KillReply killreply = 5;
+        SendReply sendreply = 6;
+        StatusReply statusreply = 7;
+    }
+
+}
+
+// Used both by CraneNimbusRequest and CraneSupervisorRequest
+message WorkerConfigureConnectionsRequest {
+    required string topoId = 1;
+    required string name = 2;
+    message GroupedAddresses {
+        required string childName = 1;
+        repeated string addresses = 2;
+        required string grouping = 3;
+    }
+
+    repeated GroupedAddresses groupedAddresses = 3;
+}
+
+// Sent from Nimbus to Supervisor
+message CraneNimbusRequest {
+    enum NimbusRequestType {
+        ADD_WORKER = 1;
+        START_WORKER = 2;
+        KILL_WORKER = 3;
+        CONFIG_CONNS = 4;
+    }
+
+    message AddWorkerRequest {
+        required string topoId = 1;
+        required string runName = 2;
+        required string name = 3;
+        required int32 instanceNumber = 4;
+    }
+
+    message StartWorkerRequest {
+        required string topoId = 1;
+        required string name = 2;
+    }
+
+    message KillWorkerRequest {
+        required string topoId = 1;
+        required string name = 2;
+    }
+
+    message ConfigureConnectionsRequest {
+        repeated WorkerConfigureConnectionsRequest workerConnections = 1;
+    }
+
+    required NimbusRequestType type = 1;
+    oneof msg {
+        AddWorkerRequest addWorkerRequest = 2;
+        StartWorkerRequest startWorkerRequest = 3;
+        KillWorkerRequest killWorkerRequest = 4;
+        ConfigureConnectionsRequest configureConnectionsRequest = 5;
+    }
+}
+
+
+// Sent from Supervisor to Nimbus
+message CraneNimbusReply {
+    enum NimbusReplyType {
+        ADD_WORKER = 1;
+        START_WORKER = 2;
+        KILL_WORKER = 3;
+        CONFIG_CONNS = 4;
+    }
+    message AddWorkerReply {
+        required string supervisorId = 1;
+        required string topoId = 2;
+        required string name = 3;
+        repeated int32 port = 4;
+    }
+
+    message StartWorkerReply {
+    }
+
+    message KillWorkerReply {
+    }
+
+    message ConfigureConnectionsReply {
+    }
+
+    required NimbusReplyType type = 1;
+    oneof msg {
+        AddWorkerReply addWorkerReply = 2;
+        StartWorkerReply startWorkerReply = 3;
+        KillWorkerReply killWorkerReply = 4;
+        ConfigureConnectionsReply configureConnectionsReply = 5;
+    }
+}
+
+
+// Sent from Supervisor to Worker
+message CraneSupervisorRequest {
+    enum SupervisorRequestType {
+        CONFIG_CONNS = 1;
+        START = 2;
+        KILL = 3;
+    }
+
+    message ConfigureConnectionsRequest {
+        repeated WorkerConfigureConnectionsRequest.GroupedAddresses configureConnectionsRequest = 1;
+    }
+
+    message StartRequest {
+    }
+
+    message KillRequest {
+    }
+
+    required SupervisorRequestType type = 1;
+    oneof msg {
+        ConfigureConnectionsRequest configureConnectionsRequest = 2;
+        StartRequest startRequest = 3;
+        KillRequest killRequest = 4;
+    }
+}
+
+// Sent from Worker to Supervisor
+message CraneSupervisorReply {
+    enum SupervisorReplyType {
+        CONFIG_CONNS = 1;
+        START = 2;
+        KILL = 3;
+    }
+
+    message ConfigureConnectionsReply {
+    }
+
+    message StartReply {
+    }
+
+    message KillReply {
+    }
+
+    required SupervisorReplyType type = 1;
+    oneof msg {
+        ConfigureConnectionsReply configureConnectionsReply = 2;
+        StartReply startReply = 3;
+        KillReply killReply = 4;
+    }
+}
+
+message CraneTuple {
+    required int32 id = 1;
+    repeated string data = 3;
+}
+
+message CraneTupleBatch {
+    repeated CraneTuple tuples = 1;
+}
+
+message CraneWrappedMessage
+{
+    required CraneType type = 1;
+    oneof msg
+    {
+        // Client -> Nimbus
+        CraneClientRequest craneclientrequest = 2;
+
+        // Nimbus -> Client
+        CraneClientReply craneclientreply = 3;
+
+        // Nimbus -> Supervisor
+        CraneNimbusRequest craneNimbusRequest = 4;
+
+        // Supervisor -> Nimbus
+        CraneNimbusReply craneNimbusReply = 5;
+
+        // Supervisor -> Worker
+        CraneSupervisorRequest craneSupervisorRequest = 6;
+
+        // Worker -> Supervisor
+        CraneSupervisorReply craneSupervisorReply = 7;
+
+        // Generic messages
+        CraneTuple craneTuple = 8;
+        CraneTupleBatch craneTupleBatch = 9;
+
+//        CraneAddWorkerRequest craneAddWorkerRequest = 4;
+//        CraneAddWorkerReply craneAddWorkerReply = 5;
+//       CraneKillWorkerRequest craneKillWorkerRequest = 6;
+//       CraneKillWorkerReply craneKillWorkerReply = 7;
+//       CraneTuple craneTuple = 8;
+//       CraneTupleBatch craneTupleBatch = 9;
+//       WorkerConfigureConnections workerConfigureConnections = 10;
+//       CraneConfigureConnections craneConfigureConnections = 11;
+    }
+}
+

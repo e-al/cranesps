@@ -1,0 +1,217 @@
+package dfile;
+
+enum DFileType
+{
+    SERVICE_REQ = 1;
+    SERVICE_REP = 2;
+    SEND_REQ = 3;
+    SEND_REP = 4;
+    FETCH_REQ = 5;
+    FETCH_REP = 6;
+    COMMAND_REQ = 7;
+    COMMAND_REP = 8;
+}
+
+
+
+enum ServiceType
+{
+    PUT = 1;
+    GET = 2;
+    DEL = 3;
+    UPDATE = 4;
+    LST = 5;
+}
+
+message ServiceRequest
+{
+    message PutRequest
+    {
+        required string filename = 1;
+        required string filemd5 = 2;
+        required int64 filesize = 3;
+    }
+    message GetRequest
+    {
+        required string filename = 1;
+        required string filepath = 2;
+    }
+    message DeleteRequest
+    {
+        required string filename = 1;
+    }
+    message UpdateRequest
+    {
+        required string filename = 1;
+        required string filemd5 = 2;
+        required int64 filesize = 3;
+    }
+    message ListRequest
+    {
+        required string filename = 1;
+    }
+
+    required ServiceType type = 1;
+    required string id = 2;
+
+    oneof msg
+    {
+        PutRequest putRequest = 3;
+        GetRequest getRequest = 4;
+        DeleteRequest deleteRequest = 5;
+        UpdateRequest updateRequest = 6;
+        ListRequest listRequest = 7;
+    }
+}
+
+message ServiceReply
+{
+    message PutReply
+    {
+        required bool approve = 1;
+        optional string filename = 2;
+    }
+    message GetReply
+    {
+        required bool available = 1;
+        optional string filename = 2;
+    }
+    message DeleteReply
+    {
+        required bool available = 1;
+        optional string filename = 2;
+    }
+    message UpdateReply
+    {
+
+    }
+    message ListReply
+    {
+        repeated string id = 1;
+    }
+    required ServiceType type = 1;
+    oneof msg {
+        PutReply putReply = 2;
+        GetReply getReply = 3;
+        DeleteReply deleteReply = 4;
+        UpdateReply updateReply = 5;
+        ListReply listReply = 6;
+    }
+}
+
+message SendRequest
+{
+    required string senderip = 1;
+    required string filename = 2;
+    required string filemd5 = 3;
+    required int64 filesize = 4;
+    required int32 chunksize = 5;
+    required int32 port = 6;
+    optional string filepath = 7;
+}
+
+message SendReply
+{
+    required bool approve = 1;
+    optional string filename = 2;
+    optional int32 chunksize = 3;
+    optional int32 port = 4;
+}
+
+message FetchRequest
+{
+    required string filename = 1;
+    required int32 port = 2;
+    required int32 chunkid = 3;
+}
+
+message FetchReply
+{
+    required string filename = 1;
+    required int32 chunkid = 2;
+    required bytes data = 3;
+    required int64 chunksize = 4;
+}
+
+
+enum CommandType
+{
+    REPLICATE = 1;
+    DELETE = 2;
+    LIST = 3;
+}
+
+message CommandRequest
+{
+
+    message ReplicateCommand
+    {
+        required string filename = 1;
+        repeated string targets = 2;
+        optional string filepath = 3;
+    }
+    message DeleteCommand
+    {
+        required string filename = 1;
+    }
+    message ListCommand
+    {
+
+    }
+    required string senderip = 1;
+    required CommandType type = 2;
+    oneof msg
+    {
+        ReplicateCommand replicateCommand = 3;
+        DeleteCommand deleteCommand = 4;
+        ListCommand listCommand = 5;
+    }
+}
+
+message FileInfo
+{
+    required string filename = 1;
+    required string filemd5 = 2;
+    required int64 size = 3;
+}
+
+
+message CommandReply
+{
+    message ReplicateReply
+    {
+
+    }
+    message DeleteReply
+    {
+
+    }
+    message ListReply
+    {
+        repeated FileInfo fileinfo=3;
+    }
+    required CommandType type = 1;
+    required string senderip = 2;
+    oneof msg
+    {
+        ReplicateReply replicateReply = 3;
+        DeleteReply deleteReply = 4;
+        ListReply listReply = 5;
+    }
+}
+
+message WrappedDFileMessage
+{
+    required DFileType type = 1;
+    oneof msg
+    {
+        ServiceRequest serviceRequest = 2;
+        ServiceReply serviceReply = 3;
+        SendRequest sendRequest = 4;
+        SendReply sendReply = 5;
+        FetchRequest fetchRequest = 6;
+        FetchReply fetchReply = 7;
+        CommandRequest commandRequest = 8;
+        CommandReply commandReply = 9;
+    }
+}

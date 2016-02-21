@@ -1,0 +1,41 @@
+package election;
+
+enum Type
+{
+    ELECTION_START = 1;
+    OK_MSG = 2;
+    NEW_LEADER = 3;
+    ELECT_CONFIRM = 4;
+}
+
+
+message ElectionStart
+{
+
+}
+
+message OkMessage
+{
+
+}
+
+message NewLeader
+{
+    required string id = 1;
+}
+
+message ElectionConfirm
+{
+}
+
+message ElectionWrappedMessage
+{
+    required Type type = 1;
+    oneof msg
+    {
+        ElectionStart electionStart = 2;
+        OkMessage okMessage = 3;
+        NewLeader newLeader = 4;
+        ElectionConfirm electionConfirm= 5;
+    }
+}
